@@ -20,10 +20,17 @@ module.exports = (builder) ->
     buildTool: "cake"
     buildFiles: "Cakefile"
 
-    getCommands: ->
+    getCommands: (callback) ->
+      #console.log "getCommands Cake"
       @buildFile =>
-        @getLines (line) ->
+        #console.log "buildFile callback"
+        commands = {}
+
+        gotline = (line) ->
+          #console.log "gotline #{line}"
           if /^cake/.test line
             [cmd, desc] = line.replace(/^cake\s+/, '').split(/\s*#\s*/, 1)
             name = cmd.replace(/\W/, '-').replace(/--+/, '-')
-            commands[name] = cmd.split /\s+/
+            commands["build:cake-#{name}"] = cmd.split /\s+/
+
+        @getLines {}, gotline, -> callback(commands)

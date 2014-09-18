@@ -57,6 +57,7 @@ class BuildSystem
         { file_regex: /^\s+from ([^:]+):(\d+)/ }  # ruby traceback
         { file_regex: /\(([^:]*):(\d+):(\d+)\)$/ }  # javascript traceback
         { file_regex: /([^:]*):(\d+):(\d+)/ }  # general
+        { file_regex: /([^:]*):(\d+):[^\d]/ }  # general2
       ]
 
     # if file_regex and line_regex

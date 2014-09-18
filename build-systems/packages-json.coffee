@@ -31,7 +31,7 @@ module.exports = (builder) ->
     canUpdate: (data) ->
       return true
 
-    getCommands: () ->
+    getCommands: (callback) ->
       @buildFile (buildfile) =>
         #console.log "buildFile: #{buildfile}"
         data = JSON.parse fs.readFileSync(buildfile, "utf8")
@@ -56,9 +56,17 @@ module.exports = (builder) ->
 
             commands["build:#{buildToolName}-#{cmd}"] = args
 
+          #commands["build:#{buildToolName}-publish-patch"] = =>
+            # if there are changes on git working copy error
+            # get most recent tag
+            # increase patch number
+            # set new tag
+            # git push
+            # npm publish --tag <newtag>
+
         #console.log "commands", commands
 
-        return commands
+        callback(commands)
 
   ###
   Handle predefined APM targets.

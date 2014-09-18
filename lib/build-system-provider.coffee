@@ -23,7 +23,7 @@ class BuildSystemProvider
 
   activate: ->
     @root = @builder.root
-    console.log("root #{@root}")
+    #console.log("root #{@root}")
     if @root
       @installWatcher()
       @update()
@@ -34,7 +34,7 @@ class BuildSystemProvider
 
   fileObserver: (curr, prev) =>
     if curr.mtime != prev.mtime
-      console.log("file changed")
+      #console.log("file changed")
       @update()
 
   # installs watch on files in buildFiles
@@ -46,7 +46,7 @@ class BuildSystemProvider
       for f in @buildFiles
         buildfile = "#{@root}/#{f}".replace(/\/\/+/, "/")
 
-        console.log("watch #{buildfile}")
+        #console.log("watch #{buildfile}")
         fs.watchFile buildfile, {interval: @watchInterval}, @fileObserver
 
   uninstallWatcher: ->
@@ -55,7 +55,7 @@ class BuildSystemProvider
       for f in @buildFiles
         buildfile = "#{@root}/#{f}".replace(/\/\/+/, "/")
 
-        console.log("unwatch #{buildfile}")
+        #console.log("unwatch #{buildfile}")
         fs.unwatchFile buildfile, @fileObserver
 
   # for each buildfile in @buildFiles, there is run `handler` on each file
@@ -79,8 +79,6 @@ class BuildSystemProvider
       buildfile = "#{@root}/#{f}".replace(/\/\/+/, "/")
       _.extend(commands, handle buildfile) if fs.existsSync buildfile
 
-      x = /foo(?:bar|glork)?/
-
     return commands
 
   # returns build command, which is used for creating atom commands
@@ -97,10 +95,10 @@ class BuildSystemProvider
   #    getCommands: ->
   #        @buildFile (buildfile) =>
   #            # now do something with build file
-  getCommands: -> {}
+  getCommands: (callback) -> callback({})
 
   # is called from watcher on file change
-  update: -> @replaceCommands(@getCommands())
+  update: -> @getCommands (commands) => @replaceCommands(commands)
 
   # replaces commands for build targets with new ones
   replaceCommands: (commands) ->
@@ -118,14 +116,14 @@ class BuildSystemProvider
 
   # adds command to atom workspace
   addCommand: (name, command) ->
-    console.log("add command")
+    #console.log("add command")
     @commands[name] = command
     @builder.addCommand name, command
     #@builder.atom.workspaceView.command name, command
 
   # removes command from atom workspace
   removeCommand: (name) ->
-    console.log("remove command")
+    #console.log("remove command")
     if @commands[name]
       @builder.removeCommand name
 
@@ -141,10 +139,12 @@ class BuildSystemProvider
   #
   # opts may have cwd, args keys and whatever child_process.exec accepts.
   # args must be an array.
-  getLines: (opts, gotline) ->
-    if opts typeof "function"
-      opts = {}
+  getLines: (opts, gotline, done) ->
+    #console.log "getLines #{opts}, #{gotline}"
+
+    if typeof opts is "function"
       gotline = opts
+      opts = {}
 
     exec_opts =
       cwd: @root
@@ -157,8 +157,13 @@ class BuildSystemProvider
       delete exec_opts.args
 
     exec cmd, exec_opts, (error, stdout, stderr) ->
+      #console.log stdout
       lines = stdout.toString().replace(/\n$/, '').split(/\n/)
+      #console.log lines
+
       for line in lines
-        gotline(line)
+        gotline(line) if gotline
+
+      done()
 
 module.exports = BuildSystemProvider

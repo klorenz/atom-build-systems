@@ -65,7 +65,9 @@ class Builder extends EventEmitter
             @register y #(require "#{path}/#{fn}")(this)
 
   projectPathChanged: ->
-    @root = atom.project.getPath()
+    if atom.project
+        @root = atom.project.getPath()
+
     @registry.updateBuildSystems()
 
   register: ->
@@ -133,9 +135,17 @@ class Builder extends EventEmitter
     @emit 'stdout', data
 
   resolveVars: (buildSystem) ->
+    activeEditor = atom.workspace.getActiveEditor()
     newBuildSystem = {}
-    file_name      = atom.workspace.getActiveEditor().getPath()
-    project_path   = atom.project.getPath()
+    if activeEditor
+      file_name = activeEditor.getPath()
+    else
+      file_name = ""
+
+    if atom.project
+      project_path   = atom.project.getPath()
+    else
+      project_path = ''
 
     vars =
       file_path: path.dirname(file_name)

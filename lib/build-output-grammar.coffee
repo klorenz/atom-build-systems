@@ -202,12 +202,13 @@ grammar =
 
     genericLocationWithColumn:
       n: "invalid.illegal.result.error.build-output"
-      m: /^((.*):(\d+):(\d+))$/
+      m: /^((.*):(\d+):(\d+))(:.*)?$/
       c:
         1: "meta.location"
         2: "meta.file-name"
         3: "meta.line-no"
         4: "meta.column"
+        5: "meta.message"
 
     javascriptTracebackLocation:
       n: "invalid.illegal.result.error.build-output"
@@ -220,12 +221,13 @@ grammar =
 
     genericLocation:
       n: "invalid.illegal.result.error.build-output"
-      m: /^((.*):(\d+))$/
+      m: /^((.*):(\d+))(:.*)?$/
       c:
         1: "meta.location"
         2: "meta.file-name"
         3: "meta.line-no"
         4: "meta.column"
+        5: "meta.message"
 
     pythonTraceback:
       n: "invalid.illegal.result.error.build-output"

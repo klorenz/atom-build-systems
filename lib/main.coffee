@@ -35,7 +35,7 @@ module.exports =
 
       return unless protocol == 'build-output:'
 
-      new BuildOutputView(builder: @builder)
+      # new BuildOutputView(builder: @builder)
 
     @builder.on 'build', (callback) =>
       @openBuildView callback
@@ -50,26 +50,31 @@ module.exports =
       @buildOutput.openResultFile()
 
   openBuildView: (callback) ->
-
     unless @buildOutput
+      console.log "create pane"
       atom.workspace.getActivePane().splitDown()
 
     atom.workspace.open("Build Output", searchAllPanes: true).done (editor) =>
       unless @buildOutput
+        console.log "create build output"
         @buildOutput = new BuildOutput(@builder, editor)
 
       editor.on "destroyed", =>
-        @buildOutput.shutdown()
-        @buildOutput = null
+        console.log "destroyed"
+        if @buildOutput
+          console.log "close build output"
+          @buildOutput.shutdown()
+          @buildOutput = null
 
-      @buildOutput.clear()
+      if @buildOutput
+        console.log "clear build output"
+        @buildOutput.clear()
 
       if callback
-       callback()
+        console.log "run callback"
+        callback()
 
     return
-
-
 
     uri = "build-output://"
 
@@ -97,4 +102,5 @@ module.exports =
     return false
 
   deactivate: ->
-    @builder.shutdown()
+    if @builder
+      @builder.shutdown()

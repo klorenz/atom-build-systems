@@ -7,7 +7,7 @@ module.exports = (builder) ->
     buildFiles: "Makefile"
     buildTool: "make"
 
-    getCommands: ->
+    getCommands: (callback) ->
       @buildFile (buildfile) =>
         commands = {}
         data = fs.readFileSync buildfile, "utf8"
@@ -17,4 +17,4 @@ module.exports = (builder) ->
           if m = /^([\w\-]+):/.exec(line)
             commands["build:make-#{m[1]}"] = [ m[1] ]
 
-        return commands
+        callback(commands)
