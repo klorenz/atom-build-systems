@@ -19,13 +19,15 @@ module.exports =
       # system discoverage
       setTimeout (=> @builder.discoverBuildSystems()), 1000
 
-    atom.packages.once 'activated', @packagesActivated
+    @subscription = atom.packages.onDidActivateAll =>
+      @packagesActivated()
+      @subscription.dispose()
 
     @projectPathChanged = =>
       console.log "projectPath changed"
       @builder.projectPathChanged()
 
-    atom.project.on "path-changed", @projectPathChanged
+    atom.project.onDidChangePaths @projectPathChanged
 
     atom.workspace.registerOpener (uriToOpen) =>
       try
@@ -52,14 +54,14 @@ module.exports =
   openBuildView: (callback) ->
     unless @buildOutput
       console.log "create pane"
-      atom.workspace.getActivePane().splitDown()
+      atom.workspace.getActivePane().splitRight()
 
     atom.workspace.open("Build Output", searchAllPanes: true).done (editor) =>
       unless @buildOutput
         console.log "create build output"
         @buildOutput = new BuildOutput(@builder, editor)
 
-      editor.on "destroyed", =>
+      editor.onDidDestroy =>
         console.log "destroyed"
         if @buildOutput
           console.log "close build output"

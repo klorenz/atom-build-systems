@@ -33,7 +33,7 @@ module.exports = (builder) ->
 
     getCommands: (callback) ->
       @buildFile (buildfile) =>
-        #console.log "buildFile: #{buildfile}"
+        console.log "buildFile: ", buildfile
         data = JSON.parse fs.readFileSync(buildfile, "utf8")
 
         commands = {}

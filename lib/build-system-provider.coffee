@@ -16,7 +16,20 @@ class BuildSystemProvider
   # project
   buildFiles: null
 
-  constructor: (@builder) ->
+  constructor: (@builder, opts) ->
+    console.log "buildFiles1", @buildFiles
+    if opts
+      if typeof opts is "string"
+        @buildFiles = path.relative opts.__filename, @builder.root
+
+    console.log "buildFiles2", @buildFiles
+
+      # if @builder.isBuildSystem(opts)
+      #   @_buildSystem = new BuildSystem(opts)
+      #
+      # if opts.__filename
+      #   @buildFiles = path.relative opts.__filename, @builder.root
+
     @commands = {}
     @watchInterval = 3079
     @activate()
@@ -95,7 +108,33 @@ class BuildSystemProvider
   #    getCommands: ->
   #        @buildFile (buildfile) =>
   #            # now do something with build file
-  getCommands: (callback) -> callback({})
+  #
+  # Default is to read a json/cson file for
+  getCommands: (callback) ->
+    @buildFile (buildfile) =>
+      if /\.json$/.test buildfile
+        data = JSON.parse fs.readFileSync buildfile
+      else if /\.cson$/.test buildfile
+        data = CSON.parse fs.readFileSync buildfile
+      else
+        # default is to return empty list of commands
+        return callback({})
+
+      data.__filename = buildfile
+      data.__dirname  = path.dirname buildfile
+
+      buildsystem = new BuildSystem data, @builder
+
+      commands = {}
+
+      name = buildsystem.name.replace /[^A-Za-z\-]+/g, '-'
+      commands["build:#{name}"] = buildsystem
+
+      for variant in buildsystem.variants
+        name = variant.name.replace /[^A-Za-z\-]+/g, '-'
+        commands["build:#{name}"] = variant
+
+      return commands
 
   # is called from watcher on file change
   update: -> @getCommands (commands) => @replaceCommands(commands)
@@ -118,7 +157,11 @@ class BuildSystemProvider
   addCommand: (name, command) ->
     #console.log("add command")
     @commands[name] = command
-    @builder.addCommand name, command
+
+    if command.scopeName
+      @builder.addCommand name, command.scopeName, command
+    else
+      @builder.addCommand name, command
     #@builder.atom.workspaceView.command name, command
 
   # removes command from atom workspace

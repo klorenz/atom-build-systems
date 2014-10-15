@@ -7,10 +7,12 @@
 # - args
 # - cwd
 {$$} = require 'atom'
+_ = require 'underscore'
+path = require 'path'
 
 class BuildSystem
 
-  constructor: (opts) ->
+  constructor: (opts, builder) ->
     # assume a filename
     if typeof opts is "string"
       if opts.test /\.(coffee|js)$/
@@ -22,10 +24,18 @@ class BuildSystem
 
     # sublime text opts (see http://sublime-text-unofficial-documentation.readthedocs.org/en/latest/reference/build_systems.html)
     {file_regex, @cmd, @selector, line_regex, @working_dir} = opts
-    {@encoding, @env, @shell, @path, @syntax} = opts
+    {@encoding, @env, @shell, @path, @syntax, @name} = opts
 
     # atom's protocol opts
     {@args, @cwd, @builder, @build, @resultRegexes, @highlight} = opts
+    {@__filename, @__dirname} = opts
+
+    if typeof @cmd is "string" and not @args?
+      #if /\n/.test cmd allow multiple shell commands as commands
+      # each line will be passed to a shell separately, if ails, build stops
+      # similar to make recipes
+
+      @cmd = @cmd.split /\s+/
 
     if @cmd instanceof Array
       @args = cmd[1..]
@@ -33,6 +43,9 @@ class BuildSystem
 
     if @working_dir? and !@cwd
       @cwd = @working_dir
+
+    if builder
+      @builder = builder
 
     if !@build
       @build = => @builder.startNewBuild this
@@ -69,5 +82,18 @@ class BuildSystem
     # for rr in @resultRegexes
     #   unless rr.output
     #     rr.output =
+    variants = []
+    if opts.variants
+      for variant in opts.variants
+        variants.push @clone variant
+
+    unless @name
+      @name = path.basename(opts.__filename).replace(/\..*$/, '')
+
+    @variants = variants
+
+  clone: (opts) ->
+    new BuildSystem _.extend _.clone(@), opts
+
 
 module.exports = BuildSystem

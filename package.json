@@ -11,8 +11,9 @@
     "atom": ">=0.50.0"
   },
   "dependencies": {
-    "underscore": "~1.6.0",
     "atom-syntax-tools": ">=0.1.0",
-    "temp": "~0.8.0"
+    "season": "^2.0.0",
+    "temp": "~0.8.0",
+    "underscore": "~1.6.0"
   }
 }

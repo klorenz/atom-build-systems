@@ -4,6 +4,7 @@ fs  = require 'fs'
 qs  = require 'querystring'
 {_} = require 'underscore'
 path = require 'path'
+CSON = require "season"
 
 BuildSystem           = require './build-system'
 BuildSystemProvider   = require './build-system-provider'
@@ -18,6 +19,8 @@ class Builder extends EventEmitter
     @BuildSystem         = BuildSystem
     @BuildSystemProvider = BuildSystemProvider
     @root                = atom.project.getPath()
+
+    console.log "root", @root
     @building = false
 
     @on 'end', =>
@@ -41,6 +44,56 @@ class Builder extends EventEmitter
     # atom.workspaceView.command "build:trigger", => @build()
     # atom.workspaceView.command "build:stop",    => @stop()
 
+  discoverBuildSystem: (fn) ->
+    console.log "discover", fn
+
+    stat = fs.statSync fn
+    return false if stat.isDirectory()
+
+    if /\.json$/.test fn
+      data = JSON.parse fs.readFileSync fn
+      return false unless @isBuildSystem data
+      @register new BuildSystemProvider builder, fn
+
+    else if /\.cson$/.test fn
+      data = CSON.readFileSync fn
+      return false unless @isBuildSystem data
+      @register new BuildSystemProvider builder, fn
+
+    else
+      console.log "else", fn
+      try
+        modname = fn.replace(/\.[^/]*$/, '')
+        # expect a coffee/js/etc. file to have an extension
+        return false if modname == fn
+        console.log "modname", modname
+        module = require modname
+        console.log "loaded module"
+      catch e
+        console.log e.stack
+        # no error message for non-modules
+        return false if /^Error: Cannot find module/.test e.toString()
+        #if /\.coffee|\.js/.
+        console.log e.stack
+        return false
+
+      console.log "module", module
+
+      return false unless typeof module is "function"
+
+      obj = module(this)
+
+      console.log "obj", obj
+
+      @register obj
+
+      # if obj instanceof BuildSystemProvider or obj instanceof BuildSystem or u
+      #   @register obj
+      # else
+      #   return false
+
+    return true
+
   discoverBuildSystems: ->
     # at this point getActivePackages() might not yet return correct number
     # of active packages.
@@ -53,22 +106,21 @@ class Builder extends EventEmitter
       build_systems_dir = "#{pkg.path}/build-systems"
       if fs.existsSync build_systems_dir
         for fn in fs.readdirSync build_systems_dir
-          if /\.json$/.test fn
-            data = JSON.parse(fs.readFileSync "#{build_systems_dir}/#{fn}")
-            @register new BuildSystem data
-          else if /\.cson$/.test fn
-            data = CSON.parse(fs.readFileSync "#{build_systems_dir}/#{fn}")
-            @register new BuildSystem data
-          else
-            x = require "#{build_systems_dir}/#{fn}"
-            y = x(this)
-            @register y #(require "#{path}/#{fn}")(this)
+          @discoverBuildSystem path.join build_systems_dir, fn
+
+    if @root
+      for fn in fs.readdirSync @root
+        @discoverBuildSystem "#{@root}/#{fn}"
+
+  isBuildSystem: (obj) ->
+    return obj.cmd
 
   projectPathChanged: ->
     if atom.project
         @root = atom.project.getPath()
 
-    @registry.updateBuildSystems()
+    if @root?
+      @registry.updateBuildSystems()
 
   register: ->
     @registry.register.apply @registry, arguments
@@ -196,6 +248,7 @@ class Builder extends EventEmitter
           ///, (mob) -> vars[mob[2...-1]]
 
       # TODO: support ${foo:default} ${foo/replace/bythis/}
+      # TODO: support getting env vars
 
       newBuildSystem[k] = v
 
