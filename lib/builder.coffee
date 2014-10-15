@@ -32,7 +32,7 @@ class Builder extends EventEmitter
     @buildListeners = 0
 
     @on 'newListener', (event, listener) =>
-      console.log ("new listener for #{event}")
+      #console.log ("new listener for #{event}")
 
       if 'event' == 'build'
         if @buildListeners
@@ -45,7 +45,7 @@ class Builder extends EventEmitter
     # atom.workspaceView.command "build:stop",    => @stop()
 
   discoverBuildSystem: (fn) ->
-    console.log "discover", fn
+    #console.log "discover", fn
 
     stat = fs.statSync fn
     return false if stat.isDirectory()
@@ -61,29 +61,28 @@ class Builder extends EventEmitter
       @register new BuildSystemProvider builder, fn
 
     else
-      console.log "else", fn
+#      console.log "else", fn
       try
         modname = fn.replace(/\.[^/]*$/, '')
         # expect a coffee/js/etc. file to have an extension
         return false if modname == fn
-        console.log "modname", modname
+#        console.log "modname", modname
         module = require modname
-        console.log "loaded module"
+#        console.log "loaded module"
       catch e
-        console.log e.stack
         # no error message for non-modules
         return false if /^Error: Cannot find module/.test e.toString()
         #if /\.coffee|\.js/.
         console.log e.stack
         return false
 
-      console.log "module", module
+#      console.log "module", module
 
       return false unless typeof module is "function"
 
       obj = module(this)
 
-      console.log "obj", obj
+      #console.log "obj", obj
 
       @register obj
 
