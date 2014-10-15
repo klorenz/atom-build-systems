@@ -1,7 +1,7 @@
 {
   "name": "build-systems",
   "main": "./lib/main",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Make build targets available as atom commands",
   "activationEvents": [],
   "repository": "https://github.com/klorenz/atom-build-systems",
