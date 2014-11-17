@@ -271,6 +271,10 @@ class BuildOutput
 
   shutdown: ->
     console.log "build output shutdown called"
+    @builder.removeAllListeners('start')
+    @builder.removeAllListeners('stdout')
+    @builder.removeAllListeners('stderr')
+    @builder.removeAllListeners('end')
     @editor.destroy()
 
 
